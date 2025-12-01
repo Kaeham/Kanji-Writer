@@ -1,13 +1,19 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    let { kanji = "高" } = $props();
 
-    let canvas:HTMLCanvasElement;
-    let ctx:CanvasRenderingContext2D;
+    let drawingCanvas:HTMLCanvasElement;
+    let displayCanvas:HTMLCanvasElement;
+    let drawingCtx:CanvasRenderingContext2D;
+    let displayCtx:CanvasRenderingContext2D;
     let flag = false;
     let dot_flag = false
+    const stroke_direction: number = 0;
+    const stroke_coords: [[number, number], [number, number]] = [[100, 100], [200, 100]];
 
-    onMount(() => {
-        ctx = canvas.getContext("2d")!;
+    onMount(() => { 
+        drawingCtx = drawingCanvas.getContext("2d")!;
+        displayCtx = displayCanvas.getContext("2d")!;        
     })
 
 
@@ -15,43 +21,52 @@
     let prevX = 0, prevY = 0;
     let currX = 0, currY = 0;
     
-    // Final is for calculations for a single stroke
+    // Start & Final is for calculations for a single stroke
     let startX = 0, startY = 0;
     let finalX = 0, finalY = 0;
-    // let dx = $derived(finalX - startX);
-    // let dy = $derived(finalY - startY);
     let stroke;
 
-    let strokeColor = "black";
-    let strokeWidth = 2;
+    const strokeColor = "black", strokeWidth = 5;
 
-    function draw() {
-        // console.log("drawing")
+    function draw(ctx:CanvasRenderingContext2D, x1:number, x2:number, y1:number, y2:number) {
         ctx.beginPath();
-        ctx.moveTo(prevX, prevY);
-        ctx.lineTo(currX, currY);
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = strokeWidth;
         ctx.stroke();
         ctx.closePath();
     }
-    
+
     function HandleDown(e:MouseEvent) {
         prevX = currX;
         prevY = currY;
-        currX = e.clientX - canvas.offsetLeft;
-        currY = e.clientY - canvas.offsetTop;
+        currX = e.clientX - drawingCanvas.offsetLeft;
+        currY = e.clientY - drawingCanvas.offsetTop;
         startX = currX;
         startY = currY;
         // console.log("Down, prev:", prevX, "cur", currX)
         flag = true;
         dot_flag = true;
         if (dot_flag) {
-            ctx.beginPath();
-            ctx.fillStyle = strokeColor;
-            ctx.fillRect(currX, currY, 2, 2);
-            ctx.closePath();
+            drawingCtx.beginPath();
+            drawingCtx.fillStyle = strokeColor;
+            drawingCtx.fillRect(currX, currY, 2, 2);
+            drawingCtx.closePath();
             dot_flag = false;
+            }
+        }
+    
+    function HandleOff(e:MouseEvent) {
+        flag = false;
+    }
+    function HandleMove(e: MouseEvent) {
+        if (flag) {
+            prevX = currX;
+            prevY = currY;
+            currX = e.clientX - drawingCanvas.offsetLeft;
+            currY = e.clientY - drawingCanvas.offsetTop;
+            draw(drawingCtx,prevX, currX, prevY, currY);
             }
         }
     function HandleUp(e: MouseEvent) {
@@ -60,22 +75,18 @@
         flag = false;
         stroke = check_stroke_direction();
         console.log("stroke dir: ", stroke);
+        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height)
+        if (stroke === stroke_direction) {
+            // add a length/width checker for the stroke
+            let [[x1, y1], [x2, y2]] = stroke_coords;
+            draw(displayCtx, x1, x2, y1, y2) // draw the kanji at the correct coordinates
+            // iterate to next stroke and stroke coordinates
+            // if final stroke move on to next character in kanji
+            // if final kanji, rate completion and move on to next kanji
         }
-
-    function HandleMove(e: MouseEvent) {
-        if (flag) {
-            // console.log("Move, prev:", prevX, "cur", currX)
-            // console.log("Move, prev Y:", prevY, "cur Y", currY)
-            prevX = currX;
-            prevY = currY;
-            currX = e.clientX - canvas.offsetLeft;
-            currY = e.clientY - canvas.offsetTop;
-            draw();
-            }
         }
-    
     function check_stroke_direction() {
-        let tolerance = 5; // tolerance in degress
+        let tolerance = 10; // tolerance in degress
         let dx = finalX - startX;
         let dy = startY - finalY; // Y is 0 at the top for some reason?
         console.log("X:", startX, finalX, "Y: ", startY, finalY)
@@ -105,19 +116,32 @@
     }
 </script>
 
-<canvas bind:this={canvas}
+<canvas bind:this={drawingCanvas}
     onmousedown={HandleDown}
     onpointerup={HandleUp}
-    onmouseout={null}
-    onblur={null} 
+    onmouseout={HandleOff}
+    onblur={null}
     onmousemove={HandleMove}
     width=500
     height=300
-    id="kanjiCanvas"
+    id="kanjiDrawingCanvas"
 ></canvas>
 
+<button onclick={() => drawingCtx.clearRect(0, 0, drawingCanvas
+    .width, drawingCanvas.height)}>
+    Clear
+</button>
+
+<canvas 
+    bind:this={displayCanvas}
+    width=500
+    height=300
+    id="kanjiDisplayCanvas">
+
+</canvas>
+
 <style>
-    #kanjiCanvas {
+    #kanjiDrawingCanvas {
 		border-color: black;
         border-style: solid;
 	}
