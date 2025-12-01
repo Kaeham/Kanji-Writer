@@ -1,8 +1,4 @@
 <style>
-	#kanjiCanvas {
-		border-color: black;
-        border-style: solid;
-	}
     .text {
         text-align: center;
         align-items: center;
@@ -16,9 +12,6 @@
 <p> Practice your kanji writing here</p>
 <div>
     <p class="text" id="kanjiKana"> kana goes here</p>
-    <!-- <canvas class="text" id="kanjiCanvas" width="500" height="300"> -->
-    <KanjiCanvas id={"kanjiCanvas"}/>
-     <!-- </KanjiCanvas> -->
-    <!-- </canvas> -->
+    <KanjiCanvas/>
     <p class="text" id="kanjiMeaning"> kanji meaning goes here</p>
 </div>
