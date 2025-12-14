@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    let { kanji = "高" } = $props();
+    import Kanji from './Kanji.svelte';
+    import { check_stroke_direction } from './CanvasMethods';
 
     let drawingCanvas:HTMLCanvasElement;
     let displayCanvas:HTMLCanvasElement;
@@ -10,6 +11,9 @@
     let dot_flag = false
     const stroke_direction: number = 0;
     const stroke_coords: [[number, number], [number, number]] = [[100, 100], [200, 100]];
+    let chars:string[];
+    let meaning:string; 
+    let kana:string[];
 
     onMount(() => { 
         drawingCtx = drawingCanvas.getContext("2d")!;
@@ -37,7 +41,6 @@
         ctx.stroke();
         ctx.closePath();
     }
-
     function HandleDown(e:MouseEvent) {
         prevX = currX;
         prevY = currY;
@@ -55,8 +58,7 @@
             drawingCtx.closePath();
             dot_flag = false;
             }
-        }
-    
+    }
     function HandleOff(e:MouseEvent) {
         flag = false;
     }
@@ -68,12 +70,14 @@
             currY = e.clientY - drawingCanvas.offsetTop;
             draw(drawingCtx,prevX, currX, prevY, currY);
             }
-        }
+    }
     function HandleUp(e: MouseEvent) {
         finalX = currX;
         finalY = currY;
         flag = false;
-        stroke = check_stroke_direction();
+        let dx = finalX - startX;
+        let dy = startY - finalY; // Y is 0 at the top for some reason?
+        stroke = check_stroke_direction(dx, dy);
         console.log("stroke dir: ", stroke);
         drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height)
         if (stroke === stroke_direction) {
@@ -84,37 +88,13 @@
             // if final stroke move on to next character in kanji
             // if final kanji, rate completion and move on to next kanji
         }
-        }
-    function check_stroke_direction() {
-        let tolerance = 10; // tolerance in degress
-        let dx = finalX - startX;
-        let dy = startY - finalY; // Y is 0 at the top for some reason?
-        console.log("X:", startX, finalX, "Y: ", startY, finalY)
-        console.log("dx: ", dx, "dy: ", dy)
-        
-        let yFlat = Math.atan(dx/dy) * (180 / Math.PI);
-        let xFlat = Math.atan(dy/dx) * (180 / Math.PI);
-        console.log(xFlat, yFlat)
-        
-        if (-1*tolerance <= yFlat && yFlat <= tolerance) { 
-            if (dy > 0) {return 90} // up
-            else {return 270} // down
-        }
-        if (-1*tolerance <= xFlat && xFlat <= tolerance) {
-            if (dx > 0) {return 0} // up
-            else {return 180} // down
-        }
-        if (dy > 0) {
-            if (dx > 0) { return 45} // diagonal up-right
-            else { return 135} // diagonal up-left
-        }
-        else {
-            if (dx > 0) { return 315} // diagonal down-right
-            else { return 225} // diagonal down-left
-        }
-        
     }
+
+
+
 </script>
+
+<Kanji kanji="高"/>
 
 <canvas bind:this={drawingCanvas}
     onmousedown={HandleDown}
@@ -139,6 +119,7 @@
     id="kanjiDisplayCanvas">
 
 </canvas>
+
 
 <style>
     #kanjiDrawingCanvas {
