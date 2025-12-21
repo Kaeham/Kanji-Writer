@@ -1,10 +1,10 @@
 <script lang="ts">    
     // kanji is the representation of the kanji
-    import Kanji from "./Kanji.svelte";
+    // import Kanji from "./Kanji";
     // canvas is the canvas to draw that specific kanji
     import KanjiCanvas from "./KanjiCanvas.svelte";
 
-    let kanji:Kanji;
+    // let kanji:Kanji;
     let canvas:KanjiCanvas;
 
     let showButton;
@@ -25,8 +25,8 @@
 
 <div class="text">
     <p> top of the flashcard </p>
-    <Kanji kanji="高校" bind:this={kanji}/>
-    <KanjiCanvas kanji={kanji} bind:this={canvas}/>
+    <!-- <Kanji kanji="高校" bind:this={kanji}/> -->
+    <KanjiCanvas bind:this={canvas}/>
 
     <div id="answerButton">
         <button 
