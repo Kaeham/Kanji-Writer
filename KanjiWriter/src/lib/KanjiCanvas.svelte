@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import * as kanji from './Kanji.ts';
     import type { StrokeData } from 'kanjivg-js';
+    import DynamicTimeWarping from 'dynamic-time-warping-ts';
 
     let contentDiv:HTMLDivElement;
     
@@ -16,8 +17,9 @@
 
     let currentStroke:number = 0;
     let currentCharacter:number = 0;
-    let stroke_direction:number;
-    let stroke_coords:[number, number][] = [];
+    let strokeCoords:[number, number][] = [];
+    const distFunc = (a:[number, number], b:[number, number]) => Math.hypot(a[0] - b[0], a[1] - b[1])
+    const DIST_THRESHOLD:number = 500;
     // curr and prev is for drawing the stroke
     let prevX = 0, prevY = 0;
     let currX = 0, currY = 0;
@@ -36,8 +38,8 @@
         currY = e.clientY - drawingCanvas.offsetTop;
         startX = currX;
         startY = currY;
-        let stroke_coords = [];
-        stroke_coords.push([[startX, startY]])
+        let strokeCoords = [];
+        strokeCoords.push([[startX, startY]])
         // console.log("Down, prev:", prevX, "cur", currX)
         flag = true;
         dot_flag = true;
@@ -47,8 +49,8 @@
             drawingCtx.fillRect(currX, currY, 2, 2);
             drawingCtx.closePath();
             dot_flag = false;
-            }
-    }
+        }}
+
     function HandleOff(e:MouseEvent) {
         if (flag === true) {    
             flag = false;
@@ -61,7 +63,7 @@
             prevY = currY;
             currX = e.clientX - drawingCanvas.offsetLeft;
             currY = e.clientY - drawingCanvas.offsetTop;
-            stroke_coords!.push([currX, currY])
+            strokeCoords!.push([currX, currY])
             draw(drawingCtx, prevX, currX, prevY, currY);
             }
     }
@@ -69,29 +71,31 @@
         flag = false;
         finalX = currX;
         finalY = currY;
-        stroke_coords!.push([finalX, finalY])
-        
-        let dx = finalX - startX;
-        let dy = startY - finalY; // Y is 0 at the top for some reason?
-        let count:number = 0;
-        stroke = check_stroke_direction(dx, dy);
-        console.log("stroke dir: ", stroke);
+        const dx = finalX - startX;
+        const dy = startY - finalY; // Y is 0 at the top for some reason?
+        strokeCoords!.push([finalX, finalY])
+        const drawnPoints:number = strokeCoords.length
         drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height)
-        console.log(stroke_coords)
-        stroke_coords!.forEach((element:number[]) => {
-            let x, y = element;
-
-        });
-        stroke_coords = []; // clear coordinates
-        if (stroke === stroke_direction) {
+        
+        // stroke = check_stroke_direction(dx, dy);
+        // console.log("stroke dir: ", stroke);
+        // console.log(strokeCoords)
+        const dtw = new DynamicTimeWarping(strokeCoords, parse_svg_line(strokeData[currentCharacter][currentStroke].path, drawnPoints), distFunc)
+        const distance = dtw.getDistance()
+        console.log("distance", distance)
+        if (distance <= DIST_THRESHOLD) {
             // add a length/width checker for the stroke
-            let [[x1, y1], [x2, y2]] = stroke_coords;
-            draw(displayCtx, x1, x2, y1, y2) // draw the kanji at the correct coordinates
+            render_svg_line(displayCtx, strokeData[currentCharacter][currentStroke].path)
             // iterate to next stroke and stroke coordinates
+            if (currentStroke < strokeData[currentCharacter].length) {currentStroke++}
             // if final stroke move on to next character in kanji
+            else if (currentCharacter < strokeData.length) {currentCharacter++; currentStroke = 0}
             // if final kanji, rate completion and move on to next kanji
         }
+        strokeCoords = []; // clear coordinates
     }
+
+    function rate_completion() {}
 
     // kanji info
     let characters: string[];
@@ -108,9 +112,13 @@
         unicodes = kanji.getUnicode();
         // console.log(characters)
         // console.log(strokeData[currentCharacter][currentStroke])
-        let points = parse_svg_line(unicodes[currentCharacter], strokeData[currentCharacter][currentStroke].path);
-        render_sampled_points(drawingCtx, points)
-        render_svg_line(displayCtx, strokeData[currentCharacter][currentStroke].path, drawingCtx)
+        for (let i=0; i<5; i++) {
+            // console.log(i)
+            // let points = parse_svg_line(strokeData[currentCharacter][currentStroke+i].path, 10);
+            // render_sampled_points(drawingCtx, points)
+            // render_svg_line(displayCtx, strokeData[currentCharacter][currentStroke+i].path, drawingCtx)
+        }
+        // console.log(strokeData)
     })
 </script>
 
