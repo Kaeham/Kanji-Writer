@@ -16,9 +16,11 @@
     let kanaPara:HTMLParagraphElement;
     let meaningPara:HTMLParagraphElement;
     
-    // function showKanji() {
-
-    // }
+    function toggleCanvas() {
+        if (canvas.contentDiv.style.visibility === "hidden") 
+        {canvas.contentDiv.style.visibility = "visible"} 
+        else {canvas.contentDiv.style.visibility = "hidden"}
+    }
 
 </script>
 
@@ -33,7 +35,7 @@
         class="answerButton"
         id="showKanjiButton" 
         bind:this={showButton}
-        onclick={() => canvas.toggleCanvas()}
+        onclick={() => toggleCanvas()}
         >
         Show Kanji</button>
     </div>
