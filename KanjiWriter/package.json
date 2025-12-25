@@ -21,6 +21,7 @@
 		"vite": "^7.2.2"
 	},
 	"dependencies": {
+		"dynamic-time-warping-ts": "^1.0.0",
 		"kanjivg-js": "^1.1.5",
 		"svg-pathdata": "^7.2.0"
 	}
