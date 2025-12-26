@@ -1,4 +1,6 @@
-import { SVGPathData, type SVGCommand } from 'svg-pathdata'
+import { SVGPathData, type CommandC, type SVGCommand } from 'svg-pathdata'
+const X_INDEX:number = 0;
+const Y_INDEX:number = 1;
 
 export function check_stroke_direction(dx:number, dy:number) {
         let tolerance = 10; // tolerance in degress
@@ -27,16 +29,24 @@ export function check_stroke_direction(dx:number, dy:number) {
         }
     }
 
+function preprocess_svg(svg_path:string):SVGPathData {
+    const sv = new SVGPathData(svg_path);
+    sv.scale(3, 3)
+    sv.translate(-15, -15)
+    return sv
+}
+
 export function parse_svg_line(svg_path: string, path_resolution:number=10):[number, number][] {
     /**
      * Function to parse a svg command and sample points along said path
      */
-    let bezierCurves:number[][] = []
-    let points:[number, number][] = []
+    const bezierCurves:number[][] = []
+    const points:[number, number][] = []
+    // const xPoints:number[] = []
+    // const yPoints:number[] = []
 
-    let sv = new SVGPathData(svg_path)
-    sv.scale(3, 3)
-    let commands = sv.commands
+    const sv = preprocess_svg(svg_path)
+    const commands = sv.commands
     let strokeCount = 0;
     
     const moveTo = commands.at(0);
@@ -58,6 +68,8 @@ export function parse_svg_line(svg_path: string, path_resolution:number=10):[num
             const t = i / path_resolution;
             const point = cubicBezierPoint(t, start, end, x1, y1, x2, y2, x, y); // point is [x, y]
             points.push(point)
+            // xPoints.push(point[X_INDEX])
+            // yPoints.push(point[Y_INDEX])
         }
     })
     return points
@@ -72,16 +84,17 @@ export function draw(ctx:CanvasRenderingContext2D, x1:number, x2:number, y1:numb
         ctx.closePath();
     }
     
-export function render_sampled_points(ctx:CanvasRenderingContext2D, points:[number, number][]) {
-    // console.log(points)
-    for( let i=0; i< points.length - 1; i++) {
-        // console.log(i)
-        const [x, y] = points.at(i)
-        const [x1, y1] = points.at(i+1)
+export function render_sampled_points(ctx:CanvasRenderingContext2D, coordinate_array:[number[], number[]]) {
+    const [xPoints, yPoints] = coordinate_array
+    for( let i=0; i < xPoints.length-1; i++) {
+        const x = xPoints.at(i)!
+        const y = yPoints.at(i)!
+        const x1 = xPoints.at(i+1)!
+        const y1 = yPoints.at(i+1)!
         draw(ctx, x, x1, y, y1)
     }}
     
-function parse_bezier(cmd:SVGCommand, cx:number, cy:number):number[] {
+function parse_bezier(cmd:CommandC, cx:number, cy:number):number[] {
     const x1 = cmd.relative ? cmd.x1 + cx : cmd.x1;
     const y1 = cmd.relative ? cmd.y1 + cy : cmd.y1;
     const x2 = cmd.relative ? cmd.x2 + cx : cmd.x2;
@@ -102,11 +115,15 @@ function cubicBezierPoint(t:number, cx:number, cy:number, x1:number, y1:number, 
 }
 
 export function render_svg_line(ctx:CanvasRenderingContext2D,
-                                svg_path:string, test_ctx=""):void {
-    let sv = new SVGPathData(svg_path)
-    
-    // console.log(svg_path)
-    sv.scale(3, 3)
+                                svg_path:string):void {
+    const sv = preprocess_svg(svg_path)
     const path = new Path2D(sv.encode());
     ctx.stroke(path);
-} 
+}
+
+export function get_start_point(svg_path:string):[number, number] {
+    const sv = preprocess_svg(svg_path)
+    const cmds = sv.commands;
+    for (let i=0; i < cmds.length; i++) { if (cmds.at(i)!.type === SVGPathData.MOVE_TO) {return [cmds.at(i)!.x, cmds.at(i)!.y]}}
+    return [0, 0]
+}
