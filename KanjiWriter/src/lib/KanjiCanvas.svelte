@@ -5,9 +5,11 @@
     import DynamicTimeWarping from 'dynamic-time-warping-ts';
 
     let contentDiv:HTMLDivElement;
+    let showButton:HTMLButtonElement;
+    let canvasVisibility:boolean = true;
     
     // drawing
-    import { check_stroke_direction, parse_svg_line, render_svg_line, draw, render_sampled_points, get_start_point } from './CanvasMethods';
+    import * as drawing from './CanvasMethods';
     let drawingCanvas:HTMLCanvasElement;
     let displayCanvas:HTMLCanvasElement;
     let drawingCtx:CanvasRenderingContext2D;
@@ -21,18 +23,11 @@
     let currentStroke:number = 0;
     let currentCharacter:number = 0;
     let strokeCoords:[number, number][] = []; // delete if X and Y distance separation works
-    let drawnX:number[] = [];
-    let drawnY:number[] = [];
     const distFunc = (a:[number, number], b:[number, number]) => Math.hypot(a[0] - b[0], a[1] - b[1])
-    const distFuncXY = (a:number, b:number) => Math.abs(a-b);
-    const DIST_THRESHOLD:number = 100;
-    // curr and prev is for drawing the stroke
+    const DIST_THRESHOLD:number = 10;
     let prevX = 0, prevY = 0;
     let currX = 0, currY = 0;
-    // Start & Final is for calculations for a single stroke
-    let startX = 0, startY = 0;
-    let finalX = 0, finalY = 0;
-    //
+    // offsets to ensure drawn stroke starts at the right pos
     let xOffset:number;
     let yOffset:number;
 
@@ -42,22 +37,16 @@
     function HandleDown(e:MouseEvent) {
         prevX = currX;
         prevY = currY;
-        currX = e.clientX - drawingCanvas.offsetLeft;
-        currY = e.clientY - drawingCanvas.offsetTop;
-        startX = currX;
-        startY = currY;
-        const strokeStart = get_start_point(strokeData[currentCharacter][currentStroke].path)
+        const mouseCoords = drawing.get_mouse_pos(drawingCanvas, e)
+        currX = mouseCoords.x;
+        currY = mouseCoords.y;
+        const strokeStart = drawing.get_start_point(strokeData[currentCharacter][currentStroke].path)
         // console.log("start", strokeStart)
         xOffset = strokeStart[X_INDEX] - currX
         yOffset = strokeStart[Y_INDEX] - currY
 
         // initial coords
-        strokeCoords.push([startX+xOffset, startY+yOffset])
-        // drawnX.push(startX)
-        drawnX.push(startX + xOffset)
-        // drawnY.push(startY)
-        drawnY.push(startY + yOffset)
-
+        strokeCoords.push([currX+xOffset, currY+yOffset])
 
         flag = true;
         dot_flag = true;
@@ -79,62 +68,38 @@
         if (flag) {
             prevX = currX;
             prevY = currY;
-            currX = e.clientX - drawingCanvas.offsetLeft;
-            currY = e.clientY - drawingCanvas.offsetTop;
+            const mouseCoords = drawing.get_mouse_pos(drawingCanvas, e)
+            currX = mouseCoords.x;
+            currY = mouseCoords.y;
             
             strokeCoords!.push([currX+xOffset, currY+yOffset])
-            // drawnX.push(currX)
-            drawnX.push(currX + xOffset)
-            // drawnY.push(currY)
-            drawnY.push(currY + yOffset)
 
-            draw(drawingCtx, prevX, currX, prevY, currY);
+            drawing.draw(drawingCtx, prevX, currX, prevY, currY, strokeWidth, strokeColor);
             }
     }
     function HandleUp(e: MouseEvent) {
         flag = false;
-        finalX = currX;
-        finalY = currY;
-        strokeCoords.push([finalX+xOffset, finalY+yOffset])
-        drawnX.push(finalX+xOffset)
-        drawnY.push(finalY+yOffset)
+        const mouseCoords = drawing.get_mouse_pos(drawingCanvas, e)
+        currX = mouseCoords.x;
+        currY = mouseCoords.y;
+        strokeCoords.push([currX+xOffset, currY+yOffset])
 
-        const drawnPoints:number = drawnX.length
+        const drawnPoints:number = strokeCoords.length
         drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height)
-        
-        const dx = finalX - startX;
-        const dy = startY - finalY; // Y is 0 at the top for some reason?
-        // stroke = check_stroke_direction(dx, dy);
-        // console.log("stroke dir: ", stroke);
-        // console.log(strokeCoords)
 
-        const sampledPoints = parse_svg_line(strokeData[currentCharacter][currentStroke].path, drawnPoints)
-        // console.log(xOffset, yOffset)
-        // console.log("Sample", sampledPoints)
-        // console.log("X: ", drawnX)
-        // console.log("Y: ", drawnY)
+        const sampledPoints = drawing.parse_svg_line(strokeData[currentCharacter][currentStroke].path, drawnPoints)
+        console.log("stroke", strokeCoords)
+        console.log("sample", sampledPoints)
         const dtw = new DynamicTimeWarping(strokeCoords, sampledPoints, distFunc)
-        const sampleX:number[] = []
-        const sampleY:number[] = []
-        sampledPoints.forEach(point => {
-            sampleX.push(point.at(X_INDEX))
-            sampleY.push(point.at(Y_INDEX))
-        })
-
-        const dtwX = new DynamicTimeWarping(drawnX, sampleX, distFuncXY)
-        const dtwY = new DynamicTimeWarping(drawnY, sampleY, distFuncXY)
         const distance = dtw.getDistance()
-        const Xdistance = dtwX.getDistance()
-        const Ydistance = dtwY.getDistance()
+        const normDis = distance/dtw.getPath().length
+        console.log("normalized distance", normDis)
         console.log("distance", distance)
-        console.log("X distance", Xdistance)
-        console.log("Y distance", Ydistance)
-
-        // if (Xdistance <= DIST_THRESHOLD && Ydistance <= DIST_THRESHOLD) 
-        if (distance/3 < DIST_THRESHOLD)
+        if (normDis < DIST_THRESHOLD)
         {
+            console.log("Drawin")
             // add a length/width checker for the stroke
-            render_svg_line(displayCtx, strokeData[currentCharacter][currentStroke].path)
+            drawing.render_svg_line(displayCtx, strokeData[currentCharacter][currentStroke].path)
             // iterate to next stroke and stroke coordinates
             if (currentStroke < strokeData[currentCharacter].length) {currentStroke++}
             // if final stroke move on to next character in kanji
@@ -142,8 +107,6 @@
             // if final kanji, rate completion and move on to next kanji
         }
         strokeCoords = []; // clear coordinates
-        drawnX = [];
-        drawnY = [];
 
     }
 
@@ -163,47 +126,76 @@
         strokeData = kanji.getStrokeData();
         // unicodes = kanji.getUnicode();
         for (let i=0; i<strokeData[currentCharacter].length; i++) {
-            // let points = parse_svg_line(strokeData[currentCharacter][currentStroke+i].path, 25);
-            // render_sampled_points(displayCtx, points)
+            let points = drawing.parse_svg_line(strokeData[currentCharacter][currentStroke+i].path, 25);
+            drawing.render_sampled_points(displayCtx, points)
         }
     })
 </script>
 
+
 <div class="KanjiCanvas" bind:this={contentDiv}>
-
-    <canvas bind:this={drawingCanvas}
-    onmousedown={HandleDown}
-    onpointerup={HandleUp}
-    onmouseout={HandleOff}
-    onblur={null}
-    onmousemove={HandleMove}
-    width=300
-    height=300
-    id="kanjiDrawingCanvas"
-    ></canvas>
-
     <canvas 
-    bind:this={displayCanvas}
-    width=300
-    height=300
-    id="kanjiDisplayCanvas">
+        bind:this={displayCanvas}
+        width=300
+        height=300
+        id="kanjiDisplayCanvas">
     </canvas>
+    <canvas bind:this={drawingCanvas}
+        onmousedown={HandleDown}
+        onpointerup={HandleUp}
+        onmouseout={HandleOff}
+        onblur={null}
+        onmousemove={HandleMove}
+        width=300
+        height=300
+        id="kanjiDrawingCanvas"
+    ></canvas>
+    
+</div>
+<div id="answerButton">
+    <button 
+    class="answerButton"
+    id="showKanjiButton" 
+    bind:this={showButton}
+    onclick={() => {canvasVisibility = !canvasVisibility; console.log(canvasVisibility)}}
+    >
+    Show Kanji</button>
 </div>
 
 
+
 <style>
+    .KanjiCanvas {
+        position:relative;
+        width: 100%;
+        height: 300px;
+        border-color: violet;
+        border-style: solid;
+        display: flex;
+        flex-direction: row;
+        /* flex-wrap: ; */
+        justify-content: center;
+    }
     #kanjiDrawingCanvas {
+        z-index: 1;
         border-color: black;
         border-style: solid;
+        position: absolute;
+        top: 0%;
+        bottom: 0%;
 	}
-
+    
     #kanjiDisplayCanvas {
+        z-index: 0;
         border-color: red;
         border-style: solid;
+        position: absolute;
+        top: 0%;
+        bottom: 0%;
     }
-
-    .KanjiCanvas {
-        border-color: red;
-        border-style: solid;
+    #answerButton {
+        display: block;
+        border-color: green;
+        border-style: solid;          
     }
 </style>
