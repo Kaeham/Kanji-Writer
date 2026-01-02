@@ -29,6 +29,11 @@ export function check_stroke_direction(dx:number, dy:number) {
         }
     }
 
+export function get_mouse_pos(canvas: HTMLCanvasElement, e:MouseEvent) {
+    const rect = canvas.getBoundingClientRect();
+    return {x: e.clientX - rect.left, y: e.clientY - rect.top};
+}
+
 function preprocess_svg(svg_path:string):SVGPathData {
     const sv = new SVGPathData(svg_path);
     sv.scale(3, 3)
@@ -42,8 +47,6 @@ export function parse_svg_line(svg_path: string, path_resolution:number=10):[num
      */
     const bezierCurves:number[][] = []
     const points:[number, number][] = []
-    // const xPoints:number[] = []
-    // const yPoints:number[] = []
 
     const sv = preprocess_svg(svg_path)
     const commands = sv.commands
@@ -68,30 +71,31 @@ export function parse_svg_line(svg_path: string, path_resolution:number=10):[num
             const t = i / path_resolution;
             const point = cubicBezierPoint(t, start, end, x1, y1, x2, y2, x, y); // point is [x, y]
             points.push(point)
-            // xPoints.push(point[X_INDEX])
-            // yPoints.push(point[Y_INDEX])
         }
     })
     return points
 }
-export function draw(ctx:CanvasRenderingContext2D, x1:number, x2:number, y1:number, y2:number) {
+export function draw(ctx:CanvasRenderingContext2D, x1:number, x2:number, y1:number, y2:number, strokeWidth:number = 3, strokeColor:string="black") {
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
-        // ctx.strokeStyle = strokeColor;
-        // ctx.lineWidth = strokeWidth;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
         ctx.stroke();
         ctx.closePath();
     }
     
 export function render_sampled_points(ctx:CanvasRenderingContext2D, coordinate_array:[number[], number[]]) {
     const [xPoints, yPoints] = coordinate_array
-    for( let i=0; i < xPoints.length-1; i++) {
-        const x = xPoints.at(i)!
-        const y = yPoints.at(i)!
-        const x1 = xPoints.at(i+1)!
-        const y1 = yPoints.at(i+1)!
-        draw(ctx, x, x1, y, y1)
+    const strokeWidth = 5;
+    for( let i=0; i < coordinate_array.length-1; i++) {
+        // const x = xPoints.at(i)!
+        // const y = yPoints.at(i)!
+        // const x1 = xPoints.at(i+1)!
+        // const y1 = yPoints.at(i+1)!
+        const [x, y] = coordinate_array.at(i)
+        const [x1, y1] = coordinate_array.at(i+1)
+        draw(ctx, x, x1, y, y1, strokeWidth)
     }}
     
 function parse_bezier(cmd:CommandC, cx:number, cy:number):number[] {
@@ -127,3 +131,9 @@ export function get_start_point(svg_path:string):[number, number] {
     for (let i=0; i < cmds.length; i++) { if (cmds.at(i)!.type === SVGPathData.MOVE_TO) {return [cmds.at(i)!.x, cmds.at(i)!.y]}}
     return [0, 0]
 }
+
+export function toggleCanvas(content_div:HTMLDivElement) {
+        if (content_div.style.visibility === "hidden") 
+        {content_div.style.visibility = "visible"} 
+        else {content_div.style.visibility = "hidden"}
+    }
