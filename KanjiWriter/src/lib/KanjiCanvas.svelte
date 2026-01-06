@@ -18,10 +18,11 @@
     let dot_flag = false;
     const X_INDEX = 0;
     const Y_INDEX = 1;
+    let errors:number = $state(0);
 
     // stroke information
-    let currentStroke:number = 0;
-    let currentCharacter:number = 0;
+    let currentStroke:number = $state(0);
+    let currentCharacter:number = $state(0);
     let strokeCoords:[number, number][] = []; // delete if X and Y distance separation works
     const distFunc = (a:[number, number], b:[number, number]) => Math.hypot(a[0] - b[0], a[1] - b[1])
     const DIST_THRESHOLD:number = 10;
@@ -30,8 +31,20 @@
     // offsets to ensure drawn stroke starts at the right pos
     let xOffset:number;
     let yOffset:number;
-
     const strokeColor = "black", strokeWidth = 5;
+
+    // kanji info
+    let characters: string[];
+    let strokeData: StrokeData[][] = $state([[{path: ""}]]);
+    let currentSVG = $derived(strokeData[currentCharacter][currentStroke].path)
+    let unicodes;
+    interface CardDifficulty {
+        AGAIN:number;
+        HARD:number;
+        GOOD:number;
+        EASY:number;
+    }   
+    const difficulty:CardDifficulty = { AGAIN: 0, HARD: 1, GOOD: 2, EASY: 3}
 
     
     function HandleDown(e:MouseEvent) {
@@ -40,7 +53,7 @@
         const mouseCoords = drawing.get_mouse_pos(drawingCanvas, e)
         currX = mouseCoords.x;
         currY = mouseCoords.y;
-        const strokeStart = drawing.get_start_point(strokeData[currentCharacter][currentStroke].path)
+        const strokeStart = drawing.get_start_point(currentSVG)
         // console.log("start", strokeStart)
         xOffset = strokeStart[X_INDEX] - currX
         yOffset = strokeStart[Y_INDEX] - currY
@@ -83,39 +96,43 @@
         currX = mouseCoords.x;
         currY = mouseCoords.y;
         strokeCoords.push([currX+xOffset, currY+yOffset])
+        drawing.clearCanvas(drawingCanvas, drawingCtx)
 
+        stroke_checking();
+    }
+    
+    function stroke_checking() {
         const drawnPoints:number = strokeCoords.length
-        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height)
-
-        const sampledPoints = drawing.parse_svg_line(strokeData[currentCharacter][currentStroke].path, drawnPoints)
-        console.log("stroke", strokeCoords)
-        console.log("sample", sampledPoints)
+        const sampledPoints = drawing.sample_svg_line(currentSVG, drawnPoints)
         const dtw = new DynamicTimeWarping(strokeCoords, sampledPoints, distFunc)
         const distance = dtw.getDistance()
         const normDis = distance/dtw.getPath().length
-        console.log("normalized distance", normDis)
-        console.log("distance", distance)
-        if (normDis < DIST_THRESHOLD)
-        {
-            console.log("Drawin")
-            // add a length/width checker for the stroke
-            drawing.render_svg_line(displayCtx, strokeData[currentCharacter][currentStroke].path)
-            // iterate to next stroke and stroke coordinates
-            if (currentStroke < strokeData[currentCharacter].length) {currentStroke++}
-            // if final stroke move on to next character in kanji
-            else if (currentCharacter < strokeData.length) {currentCharacter++; currentStroke = 0}
-            // if final kanji, rate completion and move on to next kanji
-        }
-        strokeCoords = []; // clear coordinates
 
+        // console.log("normalized distance", normDis)
+        // console.log("distance", distance)
+        // console.log("current: ", currentCharacter, currentStroke)
+        // console.log("lenghts:", strokeData[currentCharacter].length, strokeData.length)
+        if (normDis < DIST_THRESHOLD) {
+            console.log("Drawin")
+            errors = 0
+            drawing.render_svg_line(displayCtx, currentSVG)
+            if (currentStroke < strokeData[currentCharacter].length - 1) {currentStroke++}
+            else if (currentCharacter < strokeData.length - 1) {
+                console.log("clearing")
+                currentCharacter++; currentStroke = 0
+                drawing.clearCanvas(displayCanvas, displayCtx)}
+            else { rate_completion() }
+        } else { errors += 1;
+            if (errors >= 3) {drawing.preview_stroke(currentSVG, displayCanvas, drawingCtx)}}
+        strokeCoords = []; // clear coordinates
     }
 
-    function rate_completion() {}
-
-    // kanji info
-    let characters: string[];
-    let strokeData: StrokeData[][];
-    let unicodes;
+    function rate_completion():number {
+        if (errors = 0) {return difficulty.EASY}
+        else if (errors <= 3) {return difficulty.GOOD}
+        else if (errors > 3) {return difficulty.HARD}
+        else {return difficulty.AGAIN}
+    }
 
     onMount( async () => { 
         drawingCtx = drawingCanvas.getContext("2d")!;
@@ -125,15 +142,17 @@
         characters = kanji.getCharacters();
         strokeData = kanji.getStrokeData();
         // unicodes = kanji.getUnicode();
-        for (let i=0; i<strokeData[currentCharacter].length; i++) {
-            let points = drawing.parse_svg_line(strokeData[currentCharacter][currentStroke+i].path, 25);
-            drawing.render_sampled_points(displayCtx, points)
-        }
+        // for (let i=0; i<strokeData[currentCharacter].length; i++) {
+        //     let points = drawing.sample_svg_line(strokeData[currentCharacter][currentStroke+i].path, 25);
+        //     drawing.render_sampled_points(displayCtx, points)
+        // }
     })
 </script>
 
 
 <div class="KanjiCanvas" bind:this={contentDiv}>
+    <svg viewBox="0 0 300 300" id="kanjiDisplay">
+    </svg>
     <canvas 
         bind:this={displayCanvas}
         width=300
@@ -161,8 +180,6 @@
     >
     Show Kanji</button>
 </div>
-
-
 
 <style>
     .KanjiCanvas {

@@ -41,7 +41,7 @@ function preprocess_svg(svg_path:string):SVGPathData {
     return sv
 }
 
-export function parse_svg_line(svg_path: string, path_resolution:number=10):[number, number][] {
+export function sample_svg_line(svg_path: string, path_resolution:number=10):[number, number][] {
     /**
      * Function to parse a svg command and sample points along said path
      */
@@ -84,15 +84,9 @@ export function draw(ctx:CanvasRenderingContext2D, x1:number, x2:number, y1:numb
         ctx.stroke();
         ctx.closePath();
     }
-    
 export function render_sampled_points(ctx:CanvasRenderingContext2D, coordinate_array:[number[], number[]]) {
-    const [xPoints, yPoints] = coordinate_array
     const strokeWidth = 5;
     for( let i=0; i < coordinate_array.length-1; i++) {
-        // const x = xPoints.at(i)!
-        // const y = yPoints.at(i)!
-        // const x1 = xPoints.at(i+1)!
-        // const y1 = yPoints.at(i+1)!
         const [x, y] = coordinate_array.at(i)
         const [x1, y1] = coordinate_array.at(i+1)
         draw(ctx, x, x1, y, y1, strokeWidth)
@@ -137,3 +131,18 @@ export function toggleCanvas(content_div:HTMLDivElement) {
         {content_div.style.visibility = "visible"} 
         else {content_div.style.visibility = "hidden"}
     }
+
+export function clearCanvas(canvas:HTMLCanvasElement, ctx:CanvasRenderingContext2D):void {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+}
+
+export function preview_stroke(svg_path:string, canvas:HTMLCanvasElement, ctx:CanvasRenderingContext2D) {
+    const sv = preprocess_svg(svg_path)
+    const path = new Path2D(sv.encode());
+    ctx.stroke(path);
+    // const coords = sv.getBounds()
+    // const imageData = ctx.getImageData(coords.minX -1, coords.minY - 1, coords.maxX + 1, coords.maxY + 1)
+    // console.log(imageData)
+    
+    
+}
