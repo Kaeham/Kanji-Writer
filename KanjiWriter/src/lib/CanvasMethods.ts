@@ -34,7 +34,7 @@ export function get_mouse_pos(canvas: HTMLCanvasElement, e:MouseEvent) {
     return {x: e.clientX - rect.left, y: e.clientY - rect.top};
 }
 
-function preprocess_svg(svg_path:string):SVGPathData {
+export function preprocess_svg(svg_path:string):SVGPathData {
     const sv = new SVGPathData(svg_path);
     sv.scale(3, 3)
     sv.translate(-15, -15)
@@ -126,7 +126,7 @@ export function get_start_point(svg_path:string):[number, number] {
     return [0, 0]
 }
 
-export function toggleCanvas(content_div:HTMLDivElement) {
+export function toggleCanvas(content_div:HTMLElement) {
         if (content_div.style.visibility === "hidden") 
         {content_div.style.visibility = "visible"} 
         else {content_div.style.visibility = "hidden"}
@@ -136,13 +136,7 @@ export function clearCanvas(canvas:HTMLCanvasElement, ctx:CanvasRenderingContext
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
 
-export function preview_stroke(svg_path:string, canvas:HTMLCanvasElement, ctx:CanvasRenderingContext2D) {
-    const sv = preprocess_svg(svg_path)
-    const path = new Path2D(sv.encode());
-    ctx.stroke(path);
-    // const coords = sv.getBounds()
-    // const imageData = ctx.getImageData(coords.minX -1, coords.minY - 1, coords.maxX + 1, coords.maxY + 1)
-    // console.log(imageData)
-    
-    
+export async function preview_stroke(value) {
+        await value.set(1, {duration:0})
+        await value.set(0, {duration:200})
 }

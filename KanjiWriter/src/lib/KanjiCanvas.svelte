@@ -7,9 +7,11 @@
     let contentDiv:HTMLDivElement;
     let showButton:HTMLButtonElement;
     let canvasVisibility:boolean = true;
+    let svgDisplay:SVGElement;
     
     // drawing
     import * as drawing from './CanvasMethods';
+    import { Tween } from 'svelte/motion';
     let drawingCanvas:HTMLCanvasElement;
     let displayCanvas:HTMLCanvasElement;
     let drawingCtx:CanvasRenderingContext2D;
@@ -19,11 +21,13 @@
     const X_INDEX = 0;
     const Y_INDEX = 1;
     let errors:number = $state(0);
+    let totalErrors:number = 0;
+    let fadeout = new Tween(0);
 
     // stroke information
     let currentStroke:number = $state(0);
     let currentCharacter:number = $state(0);
-    let strokeCoords:[number, number][] = []; // delete if X and Y distance separation works
+    let strokeCoords:[number, number][] = [];
     const distFunc = (a:[number, number], b:[number, number]) => Math.hypot(a[0] - b[0], a[1] - b[1])
     const DIST_THRESHOLD:number = 10;
     let prevX = 0, prevY = 0;
@@ -37,7 +41,7 @@
     let characters: string[];
     let strokeData: StrokeData[][] = $state([[{path: ""}]]);
     let currentSVG = $derived(strokeData[currentCharacter][currentStroke].path)
-    let unicodes;
+    // let unicodes;
     interface CardDifficulty {
         AGAIN:number;
         HARD:number;
@@ -101,7 +105,7 @@
         stroke_checking();
     }
     
-    function stroke_checking() {
+    async function stroke_checking() {
         const drawnPoints:number = strokeCoords.length
         const sampledPoints = drawing.sample_svg_line(currentSVG, drawnPoints)
         const dtw = new DynamicTimeWarping(strokeCoords, sampledPoints, distFunc)
@@ -114,6 +118,7 @@
         // console.log("lenghts:", strokeData[currentCharacter].length, strokeData.length)
         if (normDis < DIST_THRESHOLD) {
             console.log("Drawin")
+            totalErrors += errors
             errors = 0
             drawing.render_svg_line(displayCtx, currentSVG)
             if (currentStroke < strokeData[currentCharacter].length - 1) {currentStroke++}
@@ -121,16 +126,20 @@
                 console.log("clearing")
                 currentCharacter++; currentStroke = 0
                 drawing.clearCanvas(displayCanvas, displayCtx)}
-            else { rate_completion() }
-        } else { errors += 1;
-            if (errors >= 3) {drawing.preview_stroke(currentSVG, displayCanvas, drawingCtx)}}
+            else { rate_completion() }} 
+        else { 
+            errors += 1;
+            if (errors >= 3) {
+                drawing.preview_stroke(fadeout)
+            }
+        }
         strokeCoords = []; // clear coordinates
     }
 
     function rate_completion():number {
-        if (errors = 0) {return difficulty.EASY}
-        else if (errors <= 3) {return difficulty.GOOD}
-        else if (errors > 3) {return difficulty.HARD}
+        if (totalErrors = 0) {return difficulty.EASY}
+        else if (totalErrors <= 3) {return difficulty.GOOD}
+        else if (totalErrors > 3) {return difficulty.HARD}
         else {return difficulty.AGAIN}
     }
 
@@ -141,17 +150,14 @@
         await kanji.extractKanjiInfo(word);
         characters = kanji.getCharacters();
         strokeData = kanji.getStrokeData();
-        // unicodes = kanji.getUnicode();
-        // for (let i=0; i<strokeData[currentCharacter].length; i++) {
-        //     let points = drawing.sample_svg_line(strokeData[currentCharacter][currentStroke+i].path, 25);
-        //     drawing.render_sampled_points(displayCtx, points)
-        // }
     })
 </script>
 
 
 <div class="KanjiCanvas" bind:this={contentDiv}>
-    <svg viewBox="0 0 300 300" id="kanjiDisplay">
+    <svg width="300" height="300" bind:this={svgDisplay} id="kanjiDisplay">
+        <path d={drawing.preprocess_svg(currentSVG).encode()} fill="none" stroke="black" 
+        stroke-width=3 stroke-opacity={fadeout.current}/>
     </svg>
     <canvas 
         bind:this={displayCanvas}
@@ -169,7 +175,6 @@
         height=300
         id="kanjiDrawingCanvas"
     ></canvas>
-    
 </div>
 <div id="answerButton">
     <button 
