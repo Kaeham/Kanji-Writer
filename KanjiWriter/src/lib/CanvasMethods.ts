@@ -112,10 +112,12 @@ function cubicBezierPoint(t:number, cx:number, cy:number, x1:number, y1:number, 
     return [xPoint, yPoint]
 }
 
-export function render_svg_line(ctx:CanvasRenderingContext2D,
-                                svg_path:string):void {
+export function render_svg_line(ctx:CanvasRenderingContext2D, svg_path:string, 
+                                stroke_style:string = "black", stroke_width:number = 3):void {
     const sv = preprocess_svg(svg_path)
     const path = new Path2D(sv.encode());
+    ctx.strokeStyle = stroke_style;
+    ctx.lineWidth = stroke_width;
     ctx.stroke(path);
 }
 

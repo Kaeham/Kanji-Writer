@@ -23,6 +23,7 @@
     let errors:number = $state(0);
     let totalErrors:number = 0;
     let fadeout = new Tween(0);
+    let { firsttime, difficulty } = $props();
 
     // stroke information
     let currentStroke:number = $state(0);
@@ -42,13 +43,6 @@
     let strokeData: StrokeData[][] = $state([[{path: ""}]]);
     let currentSVG = $derived(strokeData[currentCharacter][currentStroke].path)
     // let unicodes;
-    interface CardDifficulty {
-        AGAIN:number;
-        HARD:number;
-        GOOD:number;
-        EASY:number;
-    }   
-    const difficulty:CardDifficulty = { AGAIN: 0, HARD: 1, GOOD: 2, EASY: 3}
 
     
     function HandleDown(e:MouseEvent) {
@@ -72,8 +66,8 @@
             drawingCtx.fillStyle = strokeColor;
             drawingCtx.fillRect(currX, currY, 2, 2);
             drawingCtx.closePath();
-            dot_flag = false;
-        }}
+            dot_flag = false;}
+    }
 
     function HandleOff(e:MouseEvent) {
         if (flag === true) {    
@@ -104,7 +98,6 @@
 
         stroke_checking();
     }
-    
     async function stroke_checking() {
         const drawnPoints:number = strokeCoords.length
         const sampledPoints = drawing.sample_svg_line(currentSVG, drawnPoints)
@@ -123,9 +116,16 @@
             drawing.render_svg_line(displayCtx, currentSVG)
             if (currentStroke < strokeData[currentCharacter].length - 1) {currentStroke++}
             else if (currentCharacter < strokeData.length - 1) {
-                console.log("clearing")
                 currentCharacter++; currentStroke = 0
-                drawing.clearCanvas(displayCanvas, displayCtx)}
+                drawing.clearCanvas(displayCanvas, displayCtx)
+                if (firsttime) {
+                strokeData[currentCharacter].forEach(stroke => {
+                drawing.render_svg_line(displayCtx, stroke.path, "rgba(0, 0, 0, 0.3")
+            });
+        }
+                // render low opacity nexct char if first time
+                
+            }
             else { rate_completion() }} 
         else { 
             errors += 1;
@@ -135,9 +135,8 @@
         }
         strokeCoords = []; // clear coordinates
     }
-
     function rate_completion():number {
-        if (totalErrors = 0) {return difficulty.EASY}
+        if (totalErrors === 0) {return difficulty.EASY}
         else if (totalErrors <= 3) {return difficulty.GOOD}
         else if (totalErrors > 3) {return difficulty.HARD}
         else {return difficulty.AGAIN}
@@ -150,6 +149,11 @@
         await kanji.extractKanjiInfo(word);
         characters = kanji.getCharacters();
         strokeData = kanji.getStrokeData();
+        if (firsttime) {
+            strokeData[currentCharacter].forEach(stroke => {
+                drawing.render_svg_line(displayCtx, stroke.path, "rgba(0, 0, 0, 0.3")
+            });
+        }
     })
 </script>
 
