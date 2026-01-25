@@ -1,6 +1,8 @@
 import Dexie from "dexie";
 
 export const db = new Dexie("kanji-db")
+const nonJapaneseRegex =
+    /[^\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー々]/u
 
 db.version(1).stores({
     cards: '++id, &kanji_id, lastReviewDate, dueReviewDate',
@@ -9,8 +11,18 @@ db.version(1).stores({
 
 
 export async function add_kanji(input_kanji: string) {
-    if (await get_kanji(input_kanji)) {return {"error": "kanji has already been added"}}
-    db.table("kanji").add({kanji: input_kanji})
+    if (nonJapaneseRegex.test(input_kanji)) {return {error: "non japanese characters found!"}}
+    if (!input_kanji) {return {error: "empty input"}}
+    try {
+        await db.table("kanji").add({kanji: input_kanji})
+        return { ok: true}
+    } catch (err: any) {
+        if (err?.name === "ConstraintError") {
+            return {error: "Kanji ahs already been added!"}
+        }
+        console.error(err)
+        return { error: "database error"}
+    }
 }
 
 async function get_kanji(kanji:string) {
