@@ -1,33 +1,10 @@
 import { SVGPathData, type CommandC, type SVGCommand } from 'svg-pathdata'
+import type { CardDifficulty } from './FlashcardLogic';
 const X_INDEX:number = 0;
 const Y_INDEX:number = 1;
 
-export function check_stroke_direction(dx:number, dy:number) {
-        let tolerance = 10; // tolerance in degress
-        // console.log("X:", startX, finalX, "Y: ", startY, finalY)
-        // console.log("dx: ", dx, "dy: ", dy)
-        
-        let yFlat = Math.atan(dx/dy) * (180 / Math.PI);
-        let xFlat = Math.atan(dy/dx) * (180 / Math.PI);
-        console.log(xFlat, yFlat)
-        
-        if (-1*tolerance <= yFlat && yFlat <= tolerance) { 
-            if (dy > 0) {return 90} // up
-            else {return 270} // down
-        }
-        if (-1*tolerance <= xFlat && xFlat <= tolerance) {
-            if (dx > 0) {return 0} // up
-            else {return 180} // down
-        }
-        if (dy > 0) {
-            if (dx > 0) { return 45} // diagonal up-right
-            else { return 135} // diagonal up-left
-        }
-        else {
-            if (dx > 0) { return 315} // diagonal down-right
-            else { return 225} // diagonal down-left
-        }
-    }
+const difficulty:CardDifficulty = { AGAIN: 0, HARD: 1, GOOD: 2, EASY: 3}
+
 
 export function get_mouse_pos(canvas: HTMLCanvasElement, e:MouseEvent) {
     const rect = canvas.getBoundingClientRect();
@@ -55,15 +32,16 @@ export function sample_svg_line(svg_path: string, path_resolution:number=10):[nu
     const moveTo = commands.at(0);
     let cx = moveTo?.type === SVGPathData.MOVE_TO ? moveTo.x : 0;
     let cy = moveTo?.type === SVGPathData.MOVE_TO ? moveTo.y : 0;
-    const [endX, endY] = [6, 7]; // the position for the final point of the curve
+    const [END_X, END_Y] = [6, 7]; // the position for the final point of the curve
 
     commands.forEach((cmd:SVGCommand) => {
         if (cmd.type === SVGPathData.CURVE_TO ) {
             strokeCount++
             const currentCurve = parse_bezier(cmd, cx, cy)
-            cx = currentCurve[endX]
-            cy = currentCurve[endY]
+            cx = currentCurve[END_X]
+            cy = currentCurve[END_Y]
             bezierCurves.push(currentCurve)}})
+    strokeCount = Math.max(strokeCount, 1)
     path_resolution = Math.floor(path_resolution/strokeCount)
     bezierCurves.forEach((bezier:number[]) => {
         for (let i=0; i <= path_resolution; i++) {
@@ -84,7 +62,7 @@ export function draw(ctx:CanvasRenderingContext2D, x1:number, x2:number, y1:numb
         ctx.stroke();
         ctx.closePath();
     }
-export function render_sampled_points(ctx:CanvasRenderingContext2D, coordinate_array:[number[], number[]]) {
+function render_sampled_points(ctx:CanvasRenderingContext2D, coordinate_array:[number[], number[]]) {
     const strokeWidth = 5;
     for( let i=0; i < coordinate_array.length-1; i++) {
         const [x, y] = coordinate_array.at(i)
@@ -138,7 +116,14 @@ export function clearCanvas(canvas:HTMLCanvasElement, ctx:CanvasRenderingContext
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
 
-export async function preview_stroke(value) {
+export async function preview_stroke(value:any) {
         await value.set(1, {duration:0})
         await value.set(0, {duration:200})
 }
+
+export function rate_completion(total_errors:number):number {
+        if (total_errors === 0) {return difficulty.EASY}
+        else if (total_errors <= 3) {return difficulty.GOOD}
+        else if (total_errors > 3) {return difficulty.HARD}
+        else {return difficulty.AGAIN}
+    }

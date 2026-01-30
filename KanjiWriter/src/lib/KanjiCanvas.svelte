@@ -23,7 +23,7 @@
     let errors:number = $state(0);
     let totalErrors:number = 0;
     let fadeout = new Tween(0);
-    let { firsttime, difficulty } = $props();
+    let { firsttime, word } = $props();
 
     // stroke information
     let currentStroke:number = $state(0);
@@ -40,8 +40,8 @@
 
     // kanji info
     let characters: string[];
-    let strokeData: StrokeData[][] = $state([[{path: ""}]]);
-    let currentSVG = $derived(strokeData[currentCharacter][currentStroke].path)
+    let strokeData: StrokeData[][] = $state([[]]);
+    let currentSVG = $derived(strokeData?.[currentCharacter]?.[currentStroke]?.path ?? "")
     // let unicodes;
 
     
@@ -68,7 +68,6 @@
             drawingCtx.closePath();
             dot_flag = false;}
     }
-
     function HandleOff(e:MouseEvent) {
         if (flag === true) {    
             flag = false;
@@ -126,7 +125,7 @@
                 // render low opacity nexct char if first time
                 
             }
-            else { rate_completion() }} 
+            else { drawing.rate_completion(totalErrors) }} 
         else { 
             errors += 1;
             if (errors >= 3) {
@@ -135,17 +134,12 @@
         }
         strokeCoords = []; // clear coordinates
     }
-    function rate_completion():number {
-        if (totalErrors === 0) {return difficulty.EASY}
-        else if (totalErrors <= 3) {return difficulty.GOOD}
-        else if (totalErrors > 3) {return difficulty.HARD}
-        else {return difficulty.AGAIN}
-    }
+    
 
     onMount( async () => { 
         drawingCtx = drawingCanvas.getContext("2d")!;
         displayCtx = displayCanvas.getContext("2d")!;
-        let word:string = "高校";
+        // let word:string = "高校";
         await kanji.extractKanjiInfo(word);
         characters = kanji.getCharacters();
         strokeData = kanji.getStrokeData();
@@ -155,6 +149,7 @@
             });
         }
     })
+
 </script>
 
 
@@ -180,7 +175,7 @@
         id="kanjiDrawingCanvas"
     ></canvas>
 </div>
-<div id="answerButton">
+<!-- <div id="answerButton">
     <button 
     class="answerButton"
     id="showKanjiButton" 
@@ -188,12 +183,12 @@
     onclick={() => {canvasVisibility = !canvasVisibility; console.log(canvasVisibility)}}
     >
     Show Kanji</button>
-</div>
+</div> -->
 
 <style>
     .KanjiCanvas {
         position:relative;
-        width: 100%;
+        /* width: 100%; */
         height: 300px;
         border-color: violet;
         border-style: solid;
