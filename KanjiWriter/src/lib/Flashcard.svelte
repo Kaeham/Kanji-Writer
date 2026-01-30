@@ -1,26 +1,54 @@
-<script lang="ts">    
+<script>    
     // canvas is the canvas to draw that specific kanji
     import KanjiCanvas from "./KanjiCanvas.svelte";
-    import type { CardDifficulty } from "./FlashcardLogic";
+       // let kanji:Kanji;
+    let canvas;
 
-    // let kanji:Kanji;
-    let canvas:KanjiCanvas;
-
-    let kanaPara:HTMLParagraphElement;
-    let meaningPara:HTMLParagraphElement;
-
-    let firstTime: boolean = true;
-    const difficulty:CardDifficulty = { AGAIN: 0, HARD: 1, GOOD: 2, EASY: 3}
+    let kanaPara;
+    let meaningPara;
+    let kanjiPara;
+    let inputField;
+    let word = $state("手")
+    let firsttime = true;
+    console.log()
 
 </script>
 
 
-<div class="text">
-    <p> top of the flashcard </p>
-    <!-- <Kanji kanji="高校" bind:this={kanji}/> -->
-    <KanjiCanvas firsttime difficulty bind:this={canvas}/>
-    <p> bottom of the flashcard </p>
+<div class="flashcard">
+    <input bind:this={inputField} bind:value={word} />
+    <KanjiCanvas firsttime word={word} bind:this={canvas} class="kanjiCanvas"/>
+    <div class="flashcardKanji">
+        <div class="front">
+            <p bind:this={kanaPara} class="kanjiInfo"> Kana </p>
+            <p bind:this={meaningPara} class="kanjiInfo"> Meaning </p>
+        </div>
+        <div class="back">
+            <p bind:this={kanjiPara} class="kanjiInfo" id="kanjiKanji"> Kanji</p>
+        </div>
+    </div>
 </div>
 
 <style>
+    .kanjiCanvas {
+    }
+
+    .flashcard {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .kanjiInfo {
+        display: block;
+        border-color: beige;
+        border-style: solid;
+    }
+
+    .flashcardKanji {
+        display: flex;
+        flex-direction: column;
+    }
+
+
 </style>
