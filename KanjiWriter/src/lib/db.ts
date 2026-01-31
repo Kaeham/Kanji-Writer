@@ -56,7 +56,7 @@ export async function add_card(input_kanji:string, deck_name:string): Promise<Ad
         await db.transaction("rw", 
             db.table("kanji"), db.table("cards"), db.table("deck"),
         async () => {
-            const deck = get_deck(deck_name)
+            const deck = await get_deck(deck_name)
             if (!deck) {throw new Error("DECK_NOT_FOUND")}
             let kanji = await get_kanji(input_kanji);
             if (!kanji) {
@@ -90,6 +90,7 @@ export async function add_card(input_kanji:string, deck_name:string): Promise<Ad
 
 export async function get_deck(name:string) {
     if (!name) {return undefined}
+    if (name === "*") {return await db.table("deck").toArray()}
     try {
         return await db
         .table("deck")
@@ -102,18 +103,20 @@ export async function get_deck(name:string) {
     }
 }
 
-export async function init_deck(name:string):Promise<AddDatabaseOperation> {
+export async function init_deck(name:string) {
     if (!name) {return {error: "empty name is not allowed"}}
     const deck = await get_deck(name)
     if (deck) {return {error: "a deck with that name already exists"}}
-
-    try {
-        await db.table("deck").add({
-            name: name,
-            card_count: 0})
-            return {ok: true}
-    } catch (err:any) {
-        console.error("add deck failed", err)
-        return {error: "database error"}
-    }
+    return db.transaction("rw", db.table("deck"),
+        async () => {
+            await db.table("deck").add({
+                name: name,
+                card_count: 0})          
+            }).then(() => {
+                console.log("Transaction commited for deck creation")
+                return {ok: true};
+            }).catch(err => {
+                console.error("add deck failed", err)
+                return {error: "database error"}
+            });
 }
