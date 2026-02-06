@@ -1,23 +1,32 @@
 <script>
     // @ts-nocheck
-    import { get_deck } from "$lib/db";
-    import { getAbortSignal, onMount } from "svelte";
+    import { get_deck, get_kanji } from "$lib/db";
+    import { onMount } from "svelte";
     import { get_all_cards } from "$lib/card/cardDBFunctions";
 
     let {deck} = $props()
     $inspect(deck).with(console.log)
     let cards = $state([])
 
-    function preprocess_card(card) {
+    async function preprocessCards(deck_name) {
+        const rawCards = await get_all_cards(deck_name);
 
+        const enriched = await Promise.all(
+            rawCards.map( async (card) => {
+                const kanji = await get_kanji(card.kanji_id);
+
+                return {
+                    ...card,
+                    kanji: kanji?.kanji ?? "Failed",
+                    dueReviewDate: new Date(card.dueReviewDate).toLocaleString()
+                };
+            })
+        );
+        cards = enriched;
     }
 
     $effect(() => {
-        const deckName = deck.name
-        get_all_cards(deckName).then(allCards => {
-            cards = allCards;
-            console.log(cards)
-        });
+        preprocessCards(deck.name)
     })
 </script>
 
@@ -34,7 +43,7 @@
         </div>
         {#each cards as card}
         <div class="tableRows">
-            <p class="rowContent">{card.kanji_id}</p>    
+            <p class="rowContent">{card.kanji}</p>    
             <p class="rowContent">{card.deck}</p>    
             <p class="rowContent">{card.dueReviewDate}</p>
         </div>
@@ -60,9 +69,6 @@
         justify-content: center;
     }
 
-    .tableContent {
-        
-    }
     .tableRows {
         display: flex;
         flex-direction: row;

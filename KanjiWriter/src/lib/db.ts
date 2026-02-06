@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Dexie from "dexie";
 
 export const db = new Dexie("kanji-db")
@@ -15,7 +16,7 @@ function preprocess_kanji(input_kanji:string): AddDatabaseOperation {
 
 db.version(2).stores({
     deck: '++id, &name, card_count',
-    cards: '++id, kanji_id, deck, lastReviewDate, dueReviewDate',
+    cards: '++id, &kanji_id, deck, lastReviewDate, dueReviewDate',
     kanji: '++id, &kanji',
 })
 
@@ -35,14 +36,17 @@ export async function add_kanji(input_kanji: string): Promise<AddDatabaseOperati
     }
 }
 
-async function get_kanji(kanji:string) {
+export async function get_kanji(kanji) {
     if (!kanji) return undefined
     try {
-        return await db
+        if (typeof(kanji) === "number") {
+            return await db.table("kanji")
+            .get(kanji)
+        } else {return await db
         .table("kanji")
         .where("kanji")
         .equals(kanji)
-        .first();
+        .first();}
     } catch (err) {
         console.error("Dexie get_kanji failed: ", err);
         return undefined
