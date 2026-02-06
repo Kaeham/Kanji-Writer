@@ -7,6 +7,7 @@
     import DeckSelector from "$lib/deck/deckSelector.svelte";
 
     let allDecks = $state([]);
+    let { onSelect } = $props();
     let currentSelection = $state("");
     let selectedDeck = $state(null)
 
@@ -31,10 +32,12 @@
 </script>
 
 
-<select id="deckSelectList" bind:value={currentSelection}>
+<select bind:value={currentSelection}
+    onchange={() => onSelect?.(currentSelection)}
+>
         <option value="" selected></option>
         <option value="newDeck">Create New Deck</option>
-        
+
         {#each allDecks as name}
             <option value={name}>{name}</option>
         {/each}
