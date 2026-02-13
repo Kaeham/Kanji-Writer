@@ -1,25 +1,6 @@
-// @ts-nocheck
-import Dexie from "dexie";
-import { kanjiToKana } from "./Kanji";
-
-export const db = new Dexie("kanji-db")
-const nonJapaneseRegex =
-    /[^\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー々]/u
-export type AddDatabaseOperation = 
-    | { ok: true }
-    | { error: string};
-
-export function preprocess_kanji(input_kanji:string): AddDatabaseOperation {
-    if (!input_kanji) {return {error: "empty input"}}
-    if (nonJapaneseRegex.test(input_kanji)) {return {error: "non japanese characters found"}}
-    return { ok: true}
-}
-
-db.version(3).stores({
-    deck: '++id, &name, card_count, dateAdded, dateUpdated',
-    cards: '++id, &kanji_id, front, back, deck, lastReviewDate, dueReviewDate, dateAdded. dateUpdated',
-    kanji: '++id, &kanji, kana, meaning, dateAdded, dateUpdated',
-})
+import {db} from "$lib/db";
+import { preprocess_kanji } from "$lib/db";
+import { type AddDatabaseOperation } from "$lib/db";
 
 export async function get_deck(name:string) {
     if (!name) {return undefined}
