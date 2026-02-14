@@ -23,7 +23,9 @@ export async function init_deck(name:string) {
         async () => {
             await db.table("deck").add({
                 name: name,
-                card_count: 0})          
+                card_count: 0,
+                dateAdded: Date.now(),
+                dateUpdated: Date.now()})          
             }).then(() => {
                 console.log("Transaction commited for deck creation")
                 return {ok: true};
