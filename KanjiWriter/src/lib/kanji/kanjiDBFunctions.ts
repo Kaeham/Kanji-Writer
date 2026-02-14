@@ -1,12 +1,24 @@
 import { db } from "$lib/db";
 import { preprocess_kanji, type AddDatabaseOperation } from "$lib/db";
+import { kanji_to_kana, get_kanji_meaning } from "$lib/Kanji";
 
 export async function add_kanji(input_kanji: string): Promise<AddDatabaseOperation> {
     const preprocess = preprocess_kanji(input_kanji)
     if (!preprocess.ok) {return preprocess}
     try {
-        await db.table("kanji").add({kanji: input_kanji})
-        return { ok: true}
+        await db.transaction("rw", db.table("kanji"),
+        async () => {
+            const kana = kanji_to_kana(input_kanji);
+            const meaning = get_kanji_meaning(input_kanji);
+            await db.table("kanji").add({
+                kanji: input_kanji,
+                kana: kana,
+                meaning: meaning,
+                dateAdded: Date.now(),
+                dateUpdated: Date.now()
+            })
+            return { ok: true}
+        })
     } catch (err: any) {
         if (err?.name === "ConstraintError") {
             return {error: "Kanji has already been added!"}
