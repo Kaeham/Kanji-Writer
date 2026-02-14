@@ -1,6 +1,5 @@
 // @ts-nocheck
 import Dexie from "dexie";
-import { kanjiToKana } from "./Kanji";
 
 export const db = new Dexie("kanji-db")
 const nonJapaneseRegex =

@@ -4,7 +4,6 @@
     import { get_deck } from "./deckDBFunctions";
     import DeckView from "$lib/deck/deckView.svelte";
     import NewDeck from "./newDeck.svelte";
-    import DeckSelector from "$lib/deck/deckSelector.svelte";
 
     let allDecks = $state([]);
     let { onSelect } = $props();
