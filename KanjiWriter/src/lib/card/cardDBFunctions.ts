@@ -64,6 +64,10 @@ export async function add_card(input_kanji:string, deck_name:string): Promise<Ad
         return { error: "database error"}
     }}
 
-function render_front(kanji) {}
+function render_card_front(kanji) {
+    return kanji.kana
+}
 
-function render_back(kanji) {}
+function render_card_back(kanji) {
+    const back = [kanji.kanji, kanji.meaning]
+}
