@@ -1,6 +1,8 @@
 <script>
     // @ts-nocheck
-    import { db, get_kanji, add_kanji } from "$lib/db";
+    import { db } from "$lib/db";
+    import { get_kanji, add_kanji } from "./kanjiDBFunctions";
+
     import DeckSelector from "$lib/deck/deckSelector.svelte";
     let inputKanji = $state("");
     let dbKanji = $state("");

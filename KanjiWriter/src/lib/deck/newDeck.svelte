@@ -1,5 +1,5 @@
 <script>
-    import { init_deck } from "$lib/db";
+    import { init_deck } from "./deckDBFunctions";
     let deckName = $state("")
 
 </script>

@@ -1,6 +1,7 @@
 <script>
     // @ts-nocheck
-    import { get_deck, get_kanji } from "$lib/db";
+    import { get_kanji } from "$lib/kanji/kanjiDBFunctions";
+    import { get_deck } from "./deckDBFunctions";
     import { onMount } from "svelte";
     import { get_all_cards } from "$lib/card/cardDBFunctions";
 

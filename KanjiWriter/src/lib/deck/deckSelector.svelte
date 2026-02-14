@@ -1,7 +1,7 @@
 <script>
     // @ts-nocheck
     import { onMount } from "svelte";
-    import { db, get_deck } from "$lib/db";
+    import { get_deck } from "./deckDBFunctions";
     import DeckView from "$lib/deck/deckView.svelte";
     import NewDeck from "./newDeck.svelte";
     import DeckSelector from "$lib/deck/deckSelector.svelte";

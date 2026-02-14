@@ -1,6 +1,4 @@
 import {db} from "$lib/db";
-import { preprocess_kanji } from "$lib/db";
-import { type AddDatabaseOperation } from "$lib/db";
 
 export async function get_deck(name:string) {
     if (!name) {return undefined}
