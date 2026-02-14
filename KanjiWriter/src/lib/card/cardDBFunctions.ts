@@ -36,8 +36,8 @@ export async function add_card(input_kanji:string, deck_name:string): Promise<Ad
                 kanji = await get_kanji(input_kanji);}
             
             if (!kanji) {throw new Error("KANJI_CREATION_FAILED")}
-            const back = render_back(kanji);
-            const front = render_front(kanji);
+            const back = render_card_back(kanji);
+            const front = render_card_front(kanji);
             await db.table("cards").add({
                 kanji_id: kanji.id,
                 front: front,
