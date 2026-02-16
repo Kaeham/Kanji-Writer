@@ -97,7 +97,7 @@
 
         stroke_checking();
     }
-    async function stroke_checking() {
+    function stroke_checking() {
         const drawnPoints:number = strokeCoords.length
         const sampledPoints = drawing.sample_svg_line(currentSVG, drawnPoints)
         const dtw = new DynamicTimeWarping(strokeCoords, sampledPoints, distFunc)
@@ -117,12 +117,7 @@
             else if (currentCharacter < strokeData.length - 1) {
                 currentCharacter++; currentStroke = 0
                 drawing.clearCanvas(displayCanvas, displayCtx)
-                if (firsttime) {
-                strokeData[currentCharacter].forEach(stroke => {
-                drawing.render_svg_line(displayCtx, stroke.path, "rgba(0, 0, 0, 0.3")
-            });
-        }
-                // render low opacity nexct char if first time
+                first_practice(firsttime)
                 
             }
             else { drawing.rate_completion(totalErrors) }} 
@@ -134,20 +129,27 @@
         }
         strokeCoords = []; // clear coordinates
     }
-    
-
-    onMount( async () => { 
-        drawingCtx = drawingCanvas.getContext("2d")!;
-        displayCtx = displayCanvas.getContext("2d")!;
-        // let word:string = "高校";
-        await kanji.extractKanjiInfo(word);
-        characters = kanji.getCharacters();
-        strokeData = kanji.getStrokeData();
+    function first_practice(first_time) {
         if (firsttime) {
             strokeData[currentCharacter].forEach(stroke => {
                 drawing.render_svg_line(displayCtx, stroke.path, "rgba(0, 0, 0, 0.3")
             });
         }
+    }
+    
+
+    onMount( async () => { 
+        drawingCtx = drawingCanvas.getContext("2d")!;
+        displayCtx = displayCanvas.getContext("2d")!;
+    })
+
+    $effect( () => {
+        $inspect(word).with(console.log)
+        kanji.extractKanjiInfo(word).then(result => {
+            characters = result.at(0);
+            strokeData = result.at(1);
+        });
+        // first_practice(firsttime);
     })
 
 </script>

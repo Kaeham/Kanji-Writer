@@ -1,23 +1,40 @@
-<script>    
+<script>
+    import { onMount } from "svelte";
+    
     // canvas is the canvas to draw that specific kanji
     import KanjiCanvas from "./KanjiCanvas.svelte";
-       // let kanji:Kanji;
+    import { get_kanji } from "./kanji/kanjiDBFunctions";
+    const props = $props();
     let canvas;
 
     let kanaPara;
     let meaningPara;
     let kanjiPara;
-    let inputField;
-    let word = $state("手")
-    let firsttime = true;
-    console.log()
+    let word = $state("")
+    let firsttime = $state(true);
+    
+    $effect(() => {
+        if (!props.card) return;
+        
+        firsttime = !props.card.lastReviewDate
+        console.log("firsttime: ", firsttime)
+        get_kanji(props.card.kanji_id).then(res => {word = res})
+        get_kanji(word).then(kanjiInfo => {
+            console.log("kanjiInfo", kanjiInfo)
+
+            try {if (kanjiInfo.kanji) {kanjiPara = kanjiInfo.kanji}} catch (err) {console.log(err.name)}
+            try {if (kanjiInfo.kana) {kanaPara = kanjiInfo.kana}} catch (err) {console.log(err.name)}
+            try {if (kanjiInfo.meaning) {meaningPara = kanjiInfo.meaning}} catch (err) {console.log(err.name)}
+
+        })
+        console.log("word: ", word)
+    })
 
 </script>
 
 
 <div class="flashcard">
-    <input bind:this={inputField} bind:value={word} />
-    <KanjiCanvas firsttime word={word} bind:this={canvas} class="kanjiCanvas"/>
+    <KanjiCanvas firsttime word={word} bind:this={canvas}/>
     <div class="flashcardKanji">
         <div class="front">
             <p bind:this={kanaPara} class="kanjiInfo"> Kana </p>
@@ -30,8 +47,6 @@
 </div>
 
 <style>
-    .kanjiCanvas {
-    }
 
     .flashcard {
         display: flex;

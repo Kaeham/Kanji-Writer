@@ -31,9 +31,10 @@ export async function add_kanji(input_kanji: string): Promise<AddDatabaseOperati
 export async function get_kanji(kanji: string) {
     if (!kanji) return undefined
     try {
+        // return kanji if searching directly by id
         if (typeof(kanji) === "number") {
-            return await db.table("kanji")
-            .get(kanji)
+            return (await db.table("kanji")
+            .get(kanji)).kanji
         } else {return await db
         .table("kanji")
         .where("kanji")
