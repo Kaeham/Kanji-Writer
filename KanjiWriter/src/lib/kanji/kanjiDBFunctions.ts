@@ -8,8 +8,8 @@ export async function add_kanji(input_kanji: string): Promise<AddDatabaseOperati
     try {
         await db.transaction("rw", db.table("kanji"),
         async () => {
-            const kana = kanji_to_kana(input_kanji);
-            const meaning = get_kanji_meaning(input_kanji);
+            const kana = await kanji_to_kana(input_kanji);
+            const meaning = await get_kanji_meaning(input_kanji);
             await db.table("kanji").add({
                 kanji: input_kanji,
                 kana: kana,
