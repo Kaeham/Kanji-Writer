@@ -47,15 +47,15 @@ async function kanji_call(input_kanji:string) {
     }
 }
 
-export function kanji_to_kana(text:string) {
-    if (!tokenizer) return text;
-    const tokens = tokenizer.tokenize(text);
-    return tokens.map(token => {
-        if (token.reading) {
-            return toHiragana(token.reading)
-        }
-        return token.surface_form;
-    }).join("")
+export async function kanji_to_kana(input_kanji:string) {
+    const preprocess = preprocess_kanji(input_kanji)
+    if (!preprocess.ok) {console.log(preprocess); return preprocess}
+    const jishoReturn = await kanji_call(input_kanji)
+    if (jishoReturn.error) {return jishoReturn}
+
+    const first = 0;
+    const reading = jishoReturn.data[first].japanese[first].reading
+    return reading
 }
 
 export async function get_kanji_meaning(input_kanji:string) {
@@ -63,9 +63,9 @@ export async function get_kanji_meaning(input_kanji:string) {
     if (!preprocess.ok) {console.log(preprocess); return preprocess}
     const jishoReturn = await kanji_call(input_kanji)
     if (jishoReturn.error) {return jishoReturn}
-    
-    const firstKanji = 0;
-    const senses = jishoReturn.data[firstKanji].senses
+
+    const first = 0;
+    const senses = jishoReturn.data[first].senses
     let meanings = [];
     for (const idx in senses) {
         const meaning = senses[idx].english_definitions
