@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { KanjiVG, type KanjiData, type StrokeData } from "kanjivg-js";
-// import { kuromoji } from "https://code4fukui.github.io/kuromoji-es/kuromoji.js";
-import { toHiragana } from "wanakana";
+import { preprocess_kanji } from "./db";
 const kv = new KanjiVG();
 let characters: string[];
 let strokes: StrokeData[][];
@@ -37,19 +36,18 @@ export async function extractKanjiInfo(kanji:string): Promise<[string[], StrokeD
     return [characters, strokes]
 }
 
-let tokenizer = null;
-const dictPath = "/dict"
+async function kanji_call(input_kanji:string) {
+    const APICall = '/api/jisho?kanji=' + input_kanji;
+    try {
+        const res = await fetch(APICall)
+        const fin = await res.json()
+        return fin
+    } catch (err) {
+        return {error: "kanji lookup failed" + err}
+    }
+}
 
-// export async function initTokenizer() {
-//     // tokenizer = await kuromoji.createTokenizer();
-//     tokenizer = kuromoji.builder({dicPath: dictPath}).build(
-//         function (err, tokenizer) {
-//             const path = tokenizer.tokenize("すもももももももものうち");
-//             console.log(path)
-//         })
-// }
-
-export function kanjiToKana(text:string) {
+export function kanji_to_kana(text:string) {
     if (!tokenizer) return text;
     const tokens = tokenizer.tokenize(text);
     return tokens.map(token => {
@@ -58,4 +56,21 @@ export function kanjiToKana(text:string) {
         }
         return token.surface_form;
     }).join("")
+}
+
+export async function get_kanji_meaning(input_kanji:string) {
+    const preprocess = preprocess_kanji(input_kanji)
+    if (!preprocess.ok) {console.log(preprocess); return preprocess}
+    const jishoReturn = await kanji_call(input_kanji)
+    if (jishoReturn.error) {return jishoReturn}
+    
+    const firstKanji = 0;
+    const senses = jishoReturn.data[firstKanji].senses
+    let meanings = [];
+    for (const idx in senses) {
+        const meaning = senses[idx].english_definitions
+        console.log(meaning)
+        meanings.push(meaning)
+    }
+    return meanings;
 }
