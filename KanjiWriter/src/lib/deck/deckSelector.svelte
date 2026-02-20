@@ -1,12 +1,12 @@
 <script>
     // @ts-nocheck
     import { onMount } from "svelte";
-    import { get_deck } from "./deckDBFunctions";
+    import { get_all_decks, get_deck } from "./deckDBFunctions";
     import DeckView from "$lib/deck/deckView.svelte";
     import NewDeck from "./newDeck.svelte";
 
     let allDecks = $state([]);
-    let { onSelect } = $props();
+    let { onSelect, selector } = $props();
     let currentSelection = $state("");
     let selectedDeck = $state(null)
 
@@ -25,7 +25,7 @@
     });
 
     onMount(async () => {
-        const decks = await get_deck("*")
+        const decks = await get_all_decks()
         allDecks = decks.map(d =>d.name)
     });
 </script>
@@ -33,20 +33,25 @@
 
 <select bind:value={currentSelection}
     onchange={() => onSelect?.(currentSelection)}
->
-        <option value="" selected></option>
+>       
+    <option value="" selected></option>
+    {#if !selector}
         <option value="newDeck">Create New Deck</option>
-
-        {#each allDecks as name}
-            <option value={name}>{name}</option>
-        {/each}
+    {/if}
+    {#each allDecks as name}
+        <option value={name}>{name}</option>
+    {/each}
 </select>
 
 <!-- extract this out later -->
-<div id="deckViewer">
-    {#if currentSelection === "newDeck"}
-        <NewDeck />
-    {:else if selectedDeck}
-        <DeckView deck={selectedDeck}/>
-    {/if}
-</div>
+ {#if !selector}
+    <div id="deckViewer">
+        {#if currentSelection === ""}
+            <div></div>
+        {:else if currentSelection === "newDeck"}
+            <NewDeck />
+        {:else if selectedDeck}
+            <DeckView deck={selectedDeck}/>
+        {/if}
+    </div>
+{/if}
