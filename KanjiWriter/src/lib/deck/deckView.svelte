@@ -18,7 +18,7 @@
 
                 return {
                     ...card,
-                    kanji: kanji?.kanji ?? "Failed",
+                    kanji: kanji ?? "Failed",
                     dueReviewDate: new Date(card.dueReviewDate).toLocaleString()
                 };
             })
