@@ -2,31 +2,45 @@
     // @ts-nocheck
     import { get_all_cards } from "$lib/card/cardDBFunctions";
     import { db } from "$lib/db";
+    import DeckSelector from "$lib/deck/deckSelector.svelte";
     import Flashcard from "$lib/Flashcard.svelte";
     import { onMount } from "svelte";
-    const deck = "Test";
-    const now = Date.now();
+
+    let now = $state(Date.now());
     let reviewCards = $state([]);
-    let ceil = $derived(reviewCards.length)
+    let currentDeck = $state();
     let currentCard = $state();
 
-    function random_review(max) {
-        const idx = Math.floor(Math.random() * max)
-        currentCard = reviewCards.at(idx)
+    setInterval(() => {
+        now = Date.now()
+    }, 300_000);
+
+    function random_review() {
+        const idx = Math.floor(Math.random() * reviewCards.length)
+        currentCard = reviewCards[idx]
     }
-    
-    onMount(async () => {
-        const cards = await get_all_cards(deck)
-        cards?.map(card => {
-            if (card.dueReviewDate <= now) {
-                reviewCards.push(card)
-            }
+
+    function deck_handle(selected_deck) {
+        currentDeck = selected_deck
+        console.log("current deck: ", currentDeck)
+    }
+
+    // update current deck
+    $effect( () => {
+        if (!currentDeck) return;
+
+        get_all_cards(currentDeck).then(cards => {
+            reviewCards = cards.filter(
+                card => card.dueReviewDate <= now
+            )
         })
-        random_review(ceil)
-        console.log(currentCard)
     })
 
-    $effect( () => {
+    // update current review card
+    $effect(() => {
+        if (!reviewCards.length) return;
+        if (currentCard) return;
+
         random_review(ceil)
     })
 
@@ -34,6 +48,7 @@
 
 
 <div class="page">
+    <DeckSelector onSelect={deck_handle} selector={true}></DeckSelector>
     <Flashcard card={currentCard}></Flashcard>
 </div>
 
@@ -41,10 +56,7 @@
     .page {
         width: 100%;
         height: 100%;
-        display: block;
+        display: flex;
+        flex-direction: column;
     }
 </style>
-
-
-
-
