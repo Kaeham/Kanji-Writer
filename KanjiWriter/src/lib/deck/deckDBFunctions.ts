@@ -1,8 +1,16 @@
 import {db} from "$lib/db";
 
+export async function get_all_decks() {
+    try {
+        return await db.table("deck").toArray()
+    } catch (err) {
+        console.error("Dexie get_all_decks failed: ", err)
+        return undefined
+    }
+}
+
 export async function get_deck(name:string) {
     if (!name) {return undefined}
-    if (name === "*") {return await db.table("deck").toArray()}
     try {
         return await db
         .table("deck")
