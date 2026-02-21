@@ -14,8 +14,9 @@ export function preprocess_kanji(input_kanji:string): AddDatabaseOperation {
     return { ok: true}
 }
 
-db.version(3).stores({
+db.version(4).stores({
     deck: '++id, &name, card_count, dateAdded, dateUpdated',
-    cards: '++id, &kanji_id, front, back, deck, lastReviewDate, dueReviewDate, dateAdded, dateUpdated',
+    cards: '++id, &kanji_id, &deck_id, front, back, lastReviewDate, dueReviewDate, dateAdded, dateUpdated',
     kanji: '++id, &kanji, kana, meaning, dateAdded, dateUpdated',
+    srs: '++id, &card_id, interval, repetitions, easeFactor',
 })
