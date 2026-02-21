@@ -1,6 +1,6 @@
 import { db } from "$lib/db";
 import { preprocess_kanji, type AddDatabaseOperation } from "$lib/db";
-import { kanji_to_kana, get_kanji_meaning } from "$lib/Kanji";
+import { kanji_to_kana, get_kanji_meaning } from "./Kanji";
 
 export async function add_kanji(input_kanji: string): Promise<AddDatabaseOperation> {
     const preprocess = preprocess_kanji(input_kanji)
