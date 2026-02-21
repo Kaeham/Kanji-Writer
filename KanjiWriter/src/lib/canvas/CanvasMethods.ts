@@ -1,5 +1,5 @@
 import { SVGPathData, type CommandC, type SVGCommand } from 'svg-pathdata'
-import type { CardDifficulty } from './FlashcardLogic';
+import type { CardDifficulty } from '$lib/flashcard/FlashcardLogic';
 const X_INDEX:number = 0;
 const Y_INDEX:number = 1;
 

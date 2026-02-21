@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import * as kanji from './Kanji.ts';
+    import * as kanji from '$lib/kanji/Kanji';
     import type { StrokeData } from 'kanjivg-js';
     import DynamicTimeWarping from 'dynamic-time-warping-ts';
 
@@ -23,7 +23,7 @@
     let errors:number = $state(0);
     let totalErrors:number = 0;
     let fadeout = new Tween(0);
-    let { firsttime, word } = $props();
+    let { firsttime, word, ...others } = $props();
 
     // stroke information
     let currentStroke:number = $state(0);
@@ -68,12 +68,14 @@
             drawingCtx.closePath();
             dot_flag = false;}
     }
+    
     function HandleOff(e:MouseEvent) {
         if (flag === true) {    
             flag = false;
             HandleUp(e)
         }
     }
+
     function HandleMove(e: MouseEvent) {
         if (flag) {
             prevX = currX;
@@ -87,6 +89,7 @@
             drawing.draw(drawingCtx, prevX, currX, prevY, currY, strokeWidth, strokeColor);
             }
     }
+
     function HandleUp(e: MouseEvent) {
         flag = false;
         const mouseCoords = drawing.get_mouse_pos(drawingCanvas, e)
@@ -97,6 +100,7 @@
 
         stroke_checking();
     }
+
     function stroke_checking() {
         const drawnPoints:number = strokeCoords.length
         const sampledPoints = drawing.sample_svg_line(currentSVG, drawnPoints)
@@ -116,9 +120,7 @@
             if (currentStroke < strokeData[currentCharacter].length - 1) {currentStroke++}
             else if (currentCharacter < strokeData.length - 1) {
                 currentCharacter++; currentStroke = 0
-                drawing.clearCanvas(displayCanvas, displayCtx)
-                first_practice(firsttime)
-                
+                drawing.clearCanvas(displayCanvas, displayCtx)                
             }
             else { drawing.rate_completion(totalErrors) }} 
         else { 
@@ -129,8 +131,9 @@
         }
         strokeCoords = []; // clear coordinates
     }
+
     function first_practice(first_time) {
-        if (firsttime) {
+        if (first_time) {
             strokeData[currentCharacter].forEach(stroke => {
                 drawing.render_svg_line(displayCtx, stroke.path, "rgba(0, 0, 0, 0.3")
             });
@@ -143,6 +146,7 @@
         displayCtx = displayCanvas.getContext("2d")!;
     })
 
+    // complete stroke -> update current stroke
     $effect( () => {
         $inspect(word).with(console.log)
         kanji.extractKanjiInfo(word).then(result => {

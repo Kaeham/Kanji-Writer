@@ -2,8 +2,8 @@
     import { onMount } from "svelte";
     
     // canvas is the canvas to draw that specific kanji
-    import KanjiCanvas from "./KanjiCanvas.svelte";
-    import { get_kanji } from "./kanji/kanjiDBFunctions";
+    import KanjiCanvas from "$lib/canvas/KanjiCanvas.svelte";
+    import { get_kanji } from "$lib/kanji/kanjiDBFunctions";
     const props = $props();
     let canvas;
 
@@ -13,6 +13,7 @@
     let word = $state("")
     let firsttime = $state(true);
     
+    // fetching kanji information
     $effect(() => {
         if (!props.card) return;
         
@@ -37,11 +38,12 @@
     <KanjiCanvas firsttime word={word} bind:this={canvas}/>
     <div class="flashcardKanji">
         <div class="front">
-            <p bind:this={kanaPara} class="kanjiInfo"> Kana </p>
-            <p bind:this={meaningPara} class="kanjiInfo"> Meaning </p>
+            <h3 class="kanjiInfo"> Kana </h3>
+            <p class="kanjiInfo"> </p>
+            <h3 class="kanjiInfo"> Meaning </h3>
         </div>
         <div class="back">
-            <p bind:this={kanjiPara} class="kanjiInfo" id="kanjiKanji"> Kanji</p>
+            <h3 class="kanjiInfo" id="kanjiKanji"> Kanji</h3>
         </div>
     </div>
 </div>

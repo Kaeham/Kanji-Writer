@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { KanjiVG, type KanjiData, type StrokeData } from "kanjivg-js";
-import { preprocess_kanji } from "./db";
+import { preprocess_kanji } from "$lib/db";
 const kv = new KanjiVG();
 let characters: string[];
 let strokes: StrokeData[][];
