@@ -2,7 +2,7 @@
     // @ts-nocheck
     import { db } from "$lib/db";
     import { get_kanji } from "$lib/kanji/kanjiDBFunctions";
-    import { add_card } from "./cardDBFunctions";
+    import { add_card } from "$lib/card/cardDBFunctions";
     import DeckSelector from "$lib/deck/deckSelector.svelte";
     let inputKanji = $state("");
     let dbKanji = $state("");
