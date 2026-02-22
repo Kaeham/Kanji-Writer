@@ -1,17 +1,18 @@
-import {db} from "$lib/db";
+import { db } from "$lib/db";
 import { preprocess_kanji } from "$lib/db";
 import { type AddDatabaseOperation } from "$lib/db";
 import { get_deck } from "$lib/deck/deckDBFunctions";
 import { get_kanji, add_kanji } from "$lib/kanji/kanjiDBFunctions";
 
 const cardsDB = db.table("cards")
+const deckDB = db.table("deck")
 
-export async function get_all_cards(deck_name:string) {
-    if (!deck_name) return undefined
+export async function get_all_cards(deck:string) {
+    if (!deck) return undefined
     try { 
         const cards = await cardsDB
         .where("deck")
-        .equals(deck_name)
+        .equals(deck)
         .toArray();
         return cards
     } catch (err) {
@@ -25,10 +26,10 @@ export async function add_card(input_kanji:string, deck_name:string): Promise<Ad
     if (!preprocess.ok) {return preprocess}
     try {
         await db.transaction("rw", 
-            db.table("kanji"), db.table("cards"), db.table("deck"),
+            db.table("kanji"), cardsDB, deckDB,
         async () => {
             const deck = await get_deck(deck_name)
-            if (!deck) {throw new Error("DECK_NOT_FOUND")}
+            if (!deck) { throw new Error("DECK_NOT_FOUND") }
             let kanji = await get_kanji(input_kanji);
             if (!kanji) {
                 const addKanji = await add_kanji(input_kanji)
@@ -38,7 +39,7 @@ export async function add_card(input_kanji:string, deck_name:string): Promise<Ad
             if (!kanji) {throw new Error("KANJI_CREATION_FAILED")}
             const back = render_card_back(kanji);
             const front = render_card_front(kanji);
-            await db.table("cards").add({
+            await cardsDB.add({
                 kanji_id: kanji.id,
                 front: front,
                 back: back,
@@ -70,4 +71,5 @@ function render_card_front(kanji) {
 
 function render_card_back(kanji) {
     const back = [kanji.kanji, kanji.meaning]
+    return back
 }
