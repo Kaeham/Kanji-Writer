@@ -113,6 +113,7 @@
         // console.log("current: ", currentCharacter, currentStroke)
         // console.log("lenghts:", strokeData[currentCharacter].length, strokeData.length)
         if (normDis < DIST_THRESHOLD) {
+            first_practice(firsttime)
             console.log("Drawin")
             totalErrors += errors
             errors = 0
@@ -122,7 +123,10 @@
                 currentCharacter++; currentStroke = 0
                 drawing.clearCanvas(displayCanvas, displayCtx)                
             }
-            else { drawing.rate_completion(totalErrors) }} 
+            else { 
+                const time_delta = drawing.rate_completion(totalErrors)
+                others.completion(time_delta);
+             }} 
         else { 
             errors += 1;
             if (errors >= 3) {
@@ -148,13 +152,12 @@
 
     // complete stroke -> update current stroke
     $effect( () => {
-        $inspect(word).with(console.log)
         kanji.extractKanjiInfo(word).then(result => {
             characters = result.at(0);
             strokeData = result.at(1);
-        });
+        })}
         // first_practice(firsttime);
-    })
+        )
 
 </script>
 

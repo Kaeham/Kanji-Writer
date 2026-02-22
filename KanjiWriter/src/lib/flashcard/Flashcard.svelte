@@ -10,8 +10,10 @@
     let kanaPara;
     let meaningPara;
     let kanjiPara;
+
     let word = $state("")
     let firsttime = $state(true);
+    let completion = $state();
     
     // fetching kanji information
     $effect(() => {
@@ -31,11 +33,15 @@
         console.log("word: ", word)
     })
 
+    $effect(() => {
+        if (!props.onComplete) return;
+    })
+
 </script>
 
 
 <div class="flashcard">
-    <KanjiCanvas firsttime word={word} bind:this={canvas}/>
+    <KanjiCanvas firsttime word={word} completion={props.onComplete} bind:this={canvas}/>
     <div class="flashcardKanji">
         <div class="front">
             <h3 class="kanjiInfo"> Kana </h3>
