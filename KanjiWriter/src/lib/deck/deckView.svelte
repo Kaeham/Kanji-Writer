@@ -5,26 +5,22 @@
     import { onMount } from "svelte";
     import { get_all_cards } from "$lib/card/cardDBFunctions";
 
-    let {deck} = $props()
-    $inspect(deck).with(console.log)
+    let { deck } = $props()
     let cards = $state([])
 
     async function preprocessCards(deck_name) {
         const rawCards = await get_all_cards(deck_name);
-
-        const enriched = await Promise.all(
-            rawCards.map( async (card) => {
-                const kanji = await get_kanji(card.kanji_id);
-
-                return {
-                    ...card,
-                    kanji: kanji ?? "Failed",
-                    dueReviewDate: new Date(card.dueReviewDate).toLocaleString()
-                };
-            })
-        );
-        cards = enriched;
-    }
+        if (rawCards) {
+            const enriched = await Promise.all(
+                rawCards.map( async (card) => {
+                    const kanji = await get_kanji(card.kanji_id);
+                    return {
+                        ...card,
+                        kanji: kanji ?? "Failed",
+                        dueReviewDate: new Date(card.dueReviewDate).toLocaleString()
+            }}));
+        cards = enriched
+        }}
 
     $effect(() => {
         preprocessCards(deck.name)

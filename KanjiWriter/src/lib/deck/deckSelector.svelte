@@ -26,7 +26,7 @@
 
     onMount(async () => {
         const decks = await get_all_decks()
-        allDecks = decks.map(d =>d.name)
+        if (decks) { allDecks = decks.map(d =>d.name) }
     });
 </script>
 
