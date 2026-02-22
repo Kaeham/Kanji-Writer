@@ -1,8 +1,10 @@
 import {db} from "$lib/db";
 
+const deckDB = db.table("deck")
+
 export async function get_all_decks() {
     try {
-        return await db.table("deck").toArray()
+        return await deckDB.toArray()
     } catch (err) {
         console.error("Dexie get_all_decks failed: ", err)
         return undefined
@@ -12,6 +14,9 @@ export async function get_all_decks() {
 export async function get_deck(name:string) {
     if (!name) {return undefined}
     try {
+        if (typeof(name) === "number") {
+            return (await deckDB.get(name)).name
+        }
         return await db
         .table("deck")
         .where("name")
